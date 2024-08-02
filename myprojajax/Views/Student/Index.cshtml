@@ -1,0 +1,164 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model myprojajax.Models.Student;
+@{
+}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+<script>
+    var js = jQuery.noConflict(true);
+
+    /*js(document).ready(function () {
+        js('#myTable').DataTable();
+        showStudents();
+        
+    });*/
+
+    js(document).ready(function () {
+        js("#myTable").DataTable({
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+            "order":[0,"asc"],
+            /*"language" : {
+                "processing": "~ Please Wait ~";
+            },*/
+            "ajax": {
+                "url": "/Student/GetStudents",
+                "type": "POST",
+                "datatype": "json"
+            },
+           
+            "columns": [
+
+                { "data": "firstName", "name": "First Name"},
+                { "data": "lastName", "name": "Last Name"},
+                {
+                    "render": function (data, row) { return "<a href='#' class='btn btn-danger' onclick=DeleteCustomer('" + row.id + "'); >Delete</a>"; }
+                },
+            ]
+        });
+    });
+
+    function createStudent() {
+
+        var url1 = "/Student/Post";
+
+        var studentData = {};
+        studentData.firstName = $("#first").val();
+        studentData.lastName = $("#last").val();
+
+        if(studentData.firstName && studentData.lastName)
+        {
+            $.ajax({
+                url: url1,
+                contentType: 'application/json, character=utf-8',
+                datatype: "json",
+                data: JSON.stringify(studentData),
+                method: 'Post',
+                success: function (ok) {
+                    alert("Added");
+                    showStudents();
+                },
+
+                error: function (msg) {
+                    alert("Error");
+                }
+            });
+
+        }
+            
+        
+    }
+
+    function showStudents() {
+
+        var url1 = "/Student/Get";
+
+        
+        $.ajax({
+            url: url1,
+            contentType: 'application/json, character=utf-8',
+            dataType: "json",
+            type: 'Get',
+            success: function (result) {
+                $("#StudentTable").html('');
+                var row='';
+                for (var i=0; i<result.length;i++)
+                {
+                    row = row + "<tr>"
+                        + "<td>" + result[i].Id + "</td>"
+                        + "<td>" + result[i].firstName + "</td>"
+                        + "<td>" + result[i].lastName + "</td></tr>";
+                        //+ "<td><button type='button' class='btn btn-danger' onclick='deleteStudent("+result[i].Id+")'>Delete</button></td>";
+                     
+                }
+
+                if(row!='')
+                {
+                    $("#StudentTable").append(row);
+                }
+            },
+
+            error: function (msg) {
+                alert("Error");
+            }
+        });
+    }
+
+    function deleteStudent(id) {
+        var url1 = "/Student/Delete" + id;
+        $.ajax({
+            url: url1,
+            contentType: 'application/json; charset=utf-8',
+            dataType: "json",
+            method: 'Get',
+            success: function (ok) {
+                alert("Deleted"); 
+                showStudents();
+            },
+            error: function (msg) {
+                alert("Error in Delete"); 
+            }
+        });
+    }
+
+</script>
+
+<div>
+<center><h2>Add a Student 👍</h2></center>
+<form>
+    <br />
+    <div class="form-group">
+        <label for="firstName">First Name</label>
+        <input asp-for="firstName" id="first" type="text" class="form-control" placeholder="Enter First Name">
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input asp-for="lastName" id="last" type="text" class="form-control" placeholder="Enter Last Name">
+    </div>
+    <br />
+    <center><button type="button" class="btn btn-primary" onclick="createStudent()">Submit</button></center>
+</form>
+
+<br />
+<center><h2>Show all Students 🤩</h2></center>
+<br />
+<table class="table" id="myTable">
+    <thead>
+            <tr>
+                <th>Id</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+            </tr>
+    </thead>
+    
+    <tbody id="StudentTable">
+        
+    </tbody>
+</table>
+</div>

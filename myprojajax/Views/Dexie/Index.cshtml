@@ -1,0 +1,382 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model myprojajax.Models.Student;
+
+@{
+}
+
+<script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.13/signalr.min.js"></script>
+
+<script>
+
+    var db = new Dexie("StudentDB");
+    var js = jQuery.noConflict(true);
+    js(document).ready(function () {
+
+        db.version(1).stores({
+            students: `
+                id,
+                firstName,
+                lastName,
+                status`,
+        });
+        
+        table=js("#myTable").DataTable({
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+            
+            "order": [0, "asc"],
+            /*"language" : {
+                "processing": "~ Please Wait ~";
+            },*/
+            "ajax": {
+                "url": "/Dexie/GetStudents",
+                "type": "POST",
+                "datatype": "json"
+            },
+
+            "columns": [
+                { "data": "indexId", "name": "Id" },
+                { "data": "firstName", "name": "First Name" },
+                { "data": "lastName", "name": "Last Name" },
+                {
+                    "render": function (data, type, row) {
+                        // Extract the indexId value for this row
+                        var indexId = row.indexId;
+                        return `<td><button type="button" class="btn btn-info" data-id="${indexId}" onclick="updateStudent('${indexId}')">Update</button>&emsp;<button type="button" class="btn btn-danger"data-id="${indexId}" onclick="deleteStudent('${indexId}')">Delete</button></td>`;
+                        /*db.students.toArray().then(students => {
+                            const studentList = document.getElementById('student-list');
+
+                            studentList.innerHTML = ''; // Clear existing data
+
+                            students.map(student => {
+                                const studentItem = document.createElement('tr');
+                                studentItem.innerHTML = `<td><b>${student.id}</b></td><td>${student.firstName}</td><td>${student.lastName}</td><td><button type="button" class="btn btn-info"` +
+                                    `data-id="${student.id}" onclick="updateStudent(${student.id})">Update</button>&emsp;<button type="button" class="btn btn-danger"` +
+                                    `data-id="${student.id}" onclick="deleteStudent(${student.id})">Delete</button></td>`;
+                                studentList.appendChild(studentItem);
+                            });
+                        });*/
+
+                        /*
+                        
+                        students.map(student => {
+                                const studentItem = document.createElement('tr');
+                                studentItem.innerHTML = `<td><b>${student.id}</b></td><td>${student.firstName}</td><td>${student.lastName}</td><td><button type="button" class="btn btn-info"` +
+                                    `data-id="${student.id}" onclick="updateStudent(${student.id})">Update</button>&emsp;<button type="button" class="btn btn-danger"` +
+                                    `data-id="${student.id}" onclick="deleteStudent(${student.id})">Delete</button></td>`;
+                                studentList.appendChild(studentItem);
+                            });
+
+
+                        const allRecords =  db.data.toArray();
+                        const allIDs = allRecords.map(record => record.id);
+
+                        console.log(allIDs);*/
+
+                    }
+                },
+            ]
+        });
+
+
+    });
+
+    /*function showTable()
+    {
+        js("#myTable").DataTable({
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+
+            "order": [0, "asc"],
+            /*"language" : {
+                "processing": "~ Please Wait ~";
+            },
+            "ajax": {
+                "url": "/Dexie/GetStudents",
+                "type": "POST",
+                "datatype": "json"
+            },
+
+
+            "columns": [
+
+                { "data": "firstName", "name": "First Name" },
+                { "data": "lastName", "name": "Last Name" },
+                {
+                    "render": function (data, type, student) {
+                        return `<td><button type="button" class="btn btn-info" data-id="${student.id}" onclick="updateStudent(${student.id})">Update</button>&emsp;<button type="button" class="btn btn-danger" data-id="${student.id}" onclick="deleteStudent(${student.id})">Delete</button></td>`;
+                        
+
+                    }
+                },
+            ]
+        });*/
+
+        /*db.students.toArray().then(students => {
+            const studentList = document.getElementById('student-list');
+
+            studentList.innerHTML = ''; // Clear existing data
+
+            students.map(student => {
+                const studentItem = document.createElement('tr');
+                studentItem.innerHTML = `<td><b>${student.id}</b></td><td>${student.firstName}</td><td>${student.lastName}</td><td><button type="button" class="btn btn-info"` +
+                    `data-id="${student.id}" onclick="updateStudent(${student.id})">Update</button>&emsp;<button type="button" class="btn btn-danger"` +
+                    `data-id="${student.id}" onclick="deleteStudent(${student.id})">Delete</button></td>`;
+                studentList.appendChild(studentItem);
+            });
+        });
+
+        const allRecords =  db.data.toArray();
+        const allIDs = allRecords.map(record => record.id);
+
+        console.log(allIDs);
+
+    }*/
+
+    async function updateStudent(id)
+    {
+            try {
+            var student = await db.students.where({ id: id }).first();
+
+                    const firstInputBox = document.getElementById("first");
+                    const lastInputBox = document.getElementById("last");
+                    const idInputBox = document.getElementById("idbox");
+
+                    idInputBox.value = student.id;
+                    firstInputBox.value = student.firstName;
+                    lastInputBox.value = student.lastName;
+
+            } catch (error) {
+                console.error("Error updating student:", error);
+            }
+        
+        
+    }
+
+     function updateButton()
+    {
+        var id1 = document.getElementById("idbox").value ;
+        var first = document.getElementById('first').value;
+        var last = document.getElementById('last').value;
+
+        if (first != "" && last != "") {
+
+            db.students.where("id").equals(id1).modify({ id: id1, firstName: first, lastName: last, status: 0 });
+
+            alert("Updated");
+
+        }
+
+    }
+
+    function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    .replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0, 
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+
+}
+    async function AddStudent() {
+        const random_uuid = uuidv4();
+
+        // Print the UUID
+        console.log(random_uuid);
+        const count = await db.students.count();
+        if(count!=0)
+        {
+            var lastStudent = await db.students.orderBy('id').last();
+            var newId = Number(lastStudent.id) + 1;
+        }
+        else newId=1;
+
+        var first = document.getElementById('first').value;
+        var last = document.getElementById('last').value;
+
+        if(first!="" && last!="")
+        {
+            await db.students.put({ id: random_uuid, firstName: first, lastName: last, status: 0 });
+        }
+    }
+
+    async function deleteStudent(id) {
+        try {
+            var url1 = "/Dexie/Delete?id=" + id;
+            $.ajax({
+                url: url1,
+                contentType: 'application/json; charset=utf-8',
+                dataType: "json",
+                method: 'Delete',
+                success: function (ok) {
+                    alert("Deleted");
+                    
+                },
+                error: function (msg) {
+                    alert("Error in Delete"); 
+                }
+            });
+
+            await db.students.where({ id: id }).delete();
+
+            
+
+            console.log("Student deleted successfully!");
+        } catch (error) {
+            console.error("Error deleting student:", error);
+        }
+    }
+
+     function Connect() {
+        
+
+        var first = document.getElementById('first').value;
+        var last = document.getElementById('last').value;
+
+            try {
+                var url1 = "/Dexie/Post";
+
+
+                db.students.toArray().then(students => {
+                    students.forEach(student => {
+                        var studentData = {};
+                        studentData.Id = student.id;
+                        studentData.firstName = student.firstName;
+                        studentData.lastName = student.lastName;
+                        studentData.status = student.status;
+                    console.log(studentData);
+
+                        if (studentData.status == 0) {
+                            $.ajax({
+                                url: url1,
+                                contentType: 'application/json, character=utf-8',
+                                datatype: "json",
+                                data: JSON.stringify(studentData),
+                                method: 'Post',
+                                success: function (ok) {
+                                    db.students.where("status").equals(0).modify({ status: 1 });
+                                    console.log("Student added in the server successfully!");
+                                },
+
+                                error: function (msg) {
+                                    alert("Error");
+                                }
+                            });
+                        }
+                    }
+                    )
+                    console.log(studentData);
+
+
+                });
+
+
+            }
+            catch (error) {
+                console.error("Error adding student", error);
+            }
+         
+
+        var idsJson;
+        db.students
+            .toCollection()
+            .keys()
+            .then(ids => {
+                idsJson = JSON.stringify(ids); // Convert IDs array to JSON string
+                console.log("All IDs in JSON format:", idsJson);
+
+                $.ajax({
+                    url: "/Dexie/GetNotIds",
+                    contentType: 'application/json, character=utf-8',
+                    dataType: "json",
+                    data: idsJson,
+                    type: 'Post',
+                    success: function (serverData) {
+                        if (serverData.length > 0) {
+
+                            //var studentsFromServer = JSON.parse(serverData);
+                            for (var i = 0; i < serverData.length; i++) {
+                                db.students.put({ id: serverData[i].indexId, firstName: serverData[i].firstName, lastName: serverData[i].lastName, status: 1 }).then(() => {
+                                    showTable();
+                                }).catch(error => {
+                                    console.error("Error adding students to IndexedDB:", error);
+                                });
+                            
+                            }                              
+                                
+                        }
+
+
+                    },
+
+                    error: function (msg) {
+                        alert("No Data to be fetched");
+                    }
+                });
+            })
+            .catch(error => {
+                console.error("Error retrieving IDs:", error);
+            });
+
+        
+
+
+        
+    }
+
+
+</script>
+
+<div>
+    <center><h2>Add a Student 👍</h2></center>
+    <form>
+        <br />
+        <div class="form-group">
+            <label for="Id">ID</label>
+            <input asp-for="Id" id="idbox" type="text" class="form-control" placeholder="~ ID ~" readonly>
+        </div>
+        <br/>
+        <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input asp-for="firstName" id="first" type="text" class="form-control" placeholder="Enter First Name">
+        </div>
+        <br />
+        <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input asp-for="lastName" id="last" type="text" class="form-control" placeholder="Enter Last Name">
+        </div>
+        <br />
+        <center><button type="button" class="btn btn-primary" onclick="AddStudent()">Submit</button></center>
+        <br />
+        <center><button type="button" class="btn btn-primary" onclick="updateButton()">Update</button></center>
+    </form>
+
+    <br />
+    <center><h2>Show all Students 🤩</h2></center>
+    <br />
+    <center><button type="button" class="btn btn-primary" onclick="Connect()">Connect to Server</button></center>
+    <br />
+    <table class="table" id="myTable">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody id="student-list">
+        </tbody>
+    </table>
+
+
+
+</div>
